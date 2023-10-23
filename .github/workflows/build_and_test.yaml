@@ -1,0 +1,92 @@
+name: Rust CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # run once a week to check
+    - cron:  "0 0 * * 0"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {command: fmt, rust: nightly}
+          - {command: clippy, rust: stable}
+    steps:
+      - name: Install libudev
+        run: sudo apt update && sudo apt install -yq libudev-dev
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust (${{matrix.rust}})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          profile: minimal
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run cargo ${{matrix.command}}
+        uses: actions-rs/cargo@v1
+        with:
+          command: ${{matrix.command}}
+          args: "${{matrix.command == 'fmt' && '-- --check' || '-- -D warnings'}}"
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable, nightly]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install Rust (${{matrix.rust}})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: '${{matrix.rust}}'
+          profile: minimal
+          override: true
+          components: llvm-tools-preview
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tests
+
+      - name: Generate code coverage
+        run: |
+          cargo llvm-cov --no-default-features --no-report
+          cargo llvm-cov --features=crc --no-report
+          cargo llvm-cov --features=tokio-codec --no-report
+          cargo llvm-cov --features=async-codec --no-report
+          cargo llvm-cov --features=crc,tokio-codec --no-report
+          cargo llvm-cov --features=crc,async-codec --no-report
+          cargo llvm-cov --all-features --no-report
+          cargo llvm-cov report --output-path lcov.info
+
+      - name: Upload to codecov.io
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
+          files: lcov.info
+          fail_ci_if_error: true
