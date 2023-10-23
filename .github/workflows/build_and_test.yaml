@@ -43,7 +43,6 @@ jobs:
 
   test:
     name: test
-    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
@@ -51,6 +50,8 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable, nightly]
+        os: [windows, ubuntu, macos]
+    runs-on: ${{matrix.os}}-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
