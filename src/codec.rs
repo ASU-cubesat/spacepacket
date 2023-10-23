@@ -1,7 +1,7 @@
 use crate::{Result as CCSDSResult, SpacePacket, SpacePacketError};
 use bytes::{Buf, BufMut};
 
-#[cfg(feature = "crcs")]
+#[cfg(feature = "crc")]
 use crc::Crc;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -20,8 +20,8 @@ enum CodecState {
 pub struct SpacePacketCodec {
     sync_marker: Box<[u8]>,
     state: CodecState,
-    #[cfg(feature = "crcs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "crcs")))]
+    #[cfg(feature = "crc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
     crc: Option<Crc<u16>>,
 }
 impl SpacePacketCodec {
@@ -32,12 +32,12 @@ impl SpacePacketCodec {
     /// crc agrument only valid on feature `crcs`
     pub fn new<T: AsRef<[u8]>>(
         sync_marker: T,
-        #[cfg(feature = "crcs")] crc: Option<Crc<u16>>,
+        #[cfg(feature = "crc")] crc: Option<Crc<u16>>,
     ) -> Self {
         Self {
             sync_marker: sync_marker.as_ref().to_owned().into_boxed_slice(),
             state: CodecState::Sync,
-            #[cfg(feature = "crcs")]
+            #[cfg(feature = "crc")]
             crc,
         }
     }
@@ -102,7 +102,7 @@ impl SpacePacketCodec {
         // Rever to check for sync
         self.state = CodecState::Sync;
 
-        #[cfg(feature = "crcs")]
+        #[cfg(feature = "crc")]
         match &self.crc {
             Some(crc) => SpacePacket::decode_crc(&mut data.as_slice(), crc).map(Some),
             None => SpacePacket::decode(&mut data.as_slice()).map(Some),
@@ -142,7 +142,7 @@ mod non_tokio {
             dst: &mut asynchronous_codec::BytesMut,
         ) -> Result<(), Self::Error> {
             let bytes = {
-                #[cfg(feature = "crcs")]
+                #[cfg(feature = "crc")]
                 match &self.crc {
                     Some(crc) => item.encode_crc(crc),
                     None => item.encode(),
@@ -184,7 +184,7 @@ mod tokio_codec {
             dst: &mut bytes::BytesMut,
         ) -> Result<(), Self::Error> {
             let bytes = {
-                #[cfg(feature = "crcs")]
+                #[cfg(feature = "crc")]
                 match &self.crc {
                     Some(crc) => item.encode_crc(crc),
                     None => item.encode(),
@@ -210,9 +210,9 @@ mod test {
 
     use futures::{executor, io::Cursor, SinkExt, TryStreamExt};
 
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     use crc::CRC_16_IBM_3740;
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     const CRC_CCITT_FALSE: Crc<u16> = Crc::<u16>::new(&CRC_16_IBM_3740);
 
     #[rstest]
@@ -314,7 +314,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     fn codec_no_sync_crc(
         #[values((None, None),( Some(CRC_CCITT_FALSE),  Some(CRC_CCITT_FALSE)))] crc: (
             Option<Crc<u16>>,
@@ -351,7 +351,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     fn codec_sync_crc(
         #[values((None, None),( Some(CRC_CCITT_FALSE),  Some(CRC_CCITT_FALSE)))] crc: (
             Option<Crc<u16>>,
@@ -388,7 +388,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     fn codec_sync_noise_crc(
         #[values((None, None),( Some(CRC_CCITT_FALSE),  Some(CRC_CCITT_FALSE)))] crc: (
             Option<Crc<u16>>,

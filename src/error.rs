@@ -9,8 +9,8 @@ pub type Result<T> = std::result::Result<T, SpacePacketError>;
 pub enum SpacePacketError {
     #[error("I/O error during packet decoding")]
     IO(#[from] IoError),
-    #[cfg(feature = "crcs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "crcs")))]
+    #[cfg(feature = "crc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
     #[error("Packet CRCs do not match. Expected {0:#X} != Computed {1:#X}.")]
     InvalidCRC(u16, u16),
 }

@@ -1,7 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 /// CCSDS compliant packet definition and implementations
 use byteorder::{BigEndian, ReadBytesExt};
-#[cfg(feature = "crcs")]
+#[cfg(feature = "crc")]
 use crc::Crc;
 
 use std::io::Read;
@@ -19,8 +19,8 @@ use std::io::Read;
 /// traits for compatibility.
 pub mod codec;
 
-#[cfg_attr(docsrs, doc(cfg(feature = "crcs")))]
-#[cfg(feature = "crcs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
+#[cfg(feature = "crc")]
 pub use crc;
 
 mod error;
@@ -202,8 +202,8 @@ impl SpacePacket {
         })
     }
 
-    #[cfg(feature = "crcs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "crcs")))]
+    #[cfg(feature = "crc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
     /// Encode the CCSDS packet and append a CRC-16 value using the provied [Crc].
     /// This method assumes the length of the CRC should be **included** in the payload length of the CCSDS Packet.
     pub fn encode_crc(&self, crc: &Crc<u16>) -> Vec<u8> {
@@ -219,8 +219,8 @@ impl SpacePacket {
         message
     }
 
-    #[cfg(feature = "crcs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "crcs")))]
+    #[cfg(feature = "crc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
     /// Decode a CCSDS packet with an appended a CRC-16 value using the provied [Crc].
     /// This method assumes the length of the CRC should be **included** in the payload length of the CCSDS Packet.
     /// The crc is stripped from the byte stream and not included in the returned packet.
@@ -261,7 +261,7 @@ impl SpacePacket {
 mod test {
     use super::*;
 
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     use crc::CRC_16_IBM_3740;
     use rstest::rstest;
 
@@ -325,7 +325,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(feature = "crcs")]
+    #[cfg(feature = "crc")]
     fn spacepacket_roundtrip_crc(
         #[values(
             GroupingFlag::Interm,
