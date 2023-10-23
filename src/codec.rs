@@ -108,7 +108,7 @@ impl SpacePacketCodec {
             None => SpacePacket::decode(&mut data.as_slice()).map(Some),
         }
 
-        #[cfg(not(feature = "crcs"))]
+        #[cfg(not(feature = "crc"))]
         SpacePacket::decode(&mut data.as_slice()).map(Some)
     }
 }
@@ -147,7 +147,7 @@ mod non_tokio {
                     Some(crc) => item.encode_crc(crc),
                     None => item.encode(),
                 }
-                #[cfg(not(feature = "crcs"))]
+                #[cfg(not(feature = "crc"))]
                 item.encode()
             };
 
@@ -189,7 +189,7 @@ mod tokio_codec {
                     Some(crc) => item.encode_crc(crc),
                     None => item.encode(),
                 }
-                #[cfg(not(feature = "crcs"))]
+                #[cfg(not(feature = "crc"))]
                 item.encode()
             };
 
@@ -216,7 +216,7 @@ mod test {
     const CRC_CCITT_FALSE: Crc<u16> = Crc::<u16>::new(&CRC_16_IBM_3740);
 
     #[rstest]
-    #[cfg(not(feature = "crcs"))]
+    #[cfg(not(feature = "crc"))]
     fn codec_no_sync() {
         let expected = SpacePacket::new(
             0,
@@ -247,7 +247,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(not(feature = "crcs"))]
+    #[cfg(not(feature = "crc"))]
     fn codec_sync() {
         let expected = SpacePacket::new(
             0,
@@ -262,7 +262,6 @@ mod test {
         let mut buf = vec![0_u8; 10];
         let buffer: Cursor<&mut Vec<u8>> = Cursor::new(&mut buf);
 
-        let (crc, crc2) = crc;
         let mut framed = Framed::new(buffer, SpacePacketCodec::new([0xAA, 0xBB]));
 
         executor::block_on(framed.send(expected.clone())).unwrap();
@@ -279,7 +278,7 @@ mod test {
     }
 
     #[rstest]
-    #[cfg(not(feature = "crcs"))]
+    #[cfg(not(feature = "crc"))]
     fn codec_sync_noise() {
         let expected = SpacePacket::new(
             0,
