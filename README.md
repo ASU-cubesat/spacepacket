@@ -2,7 +2,7 @@
 
 ![ci](https://github.com/ASU-Cubesat/spacepacket/actions/workflows/build_and_test.yaml/badge.svg)
 
-Yet another CCSDS space packet protocol implementation with bild in encoding and decoding.
+Yet another CCSDS space packet protocol implementation with built in encoding and decoding.
 This crate also includes CRC functionality with 16-bit CRCs via the [crc crate](https://github.com/mrhooray/crc-rs).
 
 ### Why another packet crate?
