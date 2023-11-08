@@ -1,7 +1,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../README.md")]
 /// CCSDS compliant packet definition and implementations
 use byteorder::{BigEndian, ReadBytesExt};
 #[cfg(feature = "crc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
 use crc::Crc;
 
 use std::io::Read;
@@ -19,13 +21,16 @@ use std::io::Read;
 /// traits for compatibility.
 pub mod codec;
 
-#[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
 #[cfg(feature = "crc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
+#[doc(inline)]
+/// A re-export of the [crc] crate.
 pub use crc;
 
 mod error;
 pub use error::{Result, SpacePacketError};
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// CCSDS grouping flag to determine packet location in a stream.
 pub enum GroupingFlag {
