@@ -109,7 +109,7 @@ impl PrimaryHeader {
         message
     }
     /// Decode from a byte stream for network communication.
-    /// This decoding assumed BigEndian-ness
+    /// This decoding assumes BigEndian-ness
     pub fn decode<R: Read>(buffer: &mut R) -> Result<Self> {
         let header0 = buffer.read_u16::<BigEndian>()?;
 

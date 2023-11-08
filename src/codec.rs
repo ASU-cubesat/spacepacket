@@ -1,5 +1,5 @@
 use crate::{Result as CCSDSResult, SpacePacket, SpacePacketError};
-use bytes::{Buf, BufMut};
+use bytes::{Buf, BytesMut};
 
 #[cfg(feature = "crc")]
 use crc::Crc;
@@ -52,10 +52,7 @@ impl SpacePacketCodec {
             .position(|window| window == &*self.sync_marker)
     }
 
-    fn decode_helper<B: BufMut + Buf + AsRef<[u8]>>(
-        &mut self,
-        buffer: &mut B,
-    ) -> CCSDSResult<Option<SpacePacket>> {
+    fn decode_helper(&mut self, buffer: &mut BytesMut) -> CCSDSResult<Option<SpacePacket>> {
         if self.state == CodecState::Sync {
             if let Some(index) = self.find_sync(buffer) {
                 buffer.advance(index + self.sync_marker.len());
@@ -90,7 +87,7 @@ impl SpacePacketCodec {
         if buffer.remaining() < packet_length {
             // full packet has not yet arrived
             // reserve enough bytes so we can fit it in the buffer
-            // buffer.reserve(packet_length - buffer.remaining());
+            buffer.reserve(packet_length - buffer.remaining());
 
             // Tell the frame we need more bytes
             return Ok(None);
@@ -118,15 +115,13 @@ mod non_tokio {
     use super::*;
 
     use asynchronous_codec::{Decoder, Encoder};
+
     impl Decoder for SpacePacketCodec {
         type Item = SpacePacket;
 
         type Error = SpacePacketError;
 
-        fn decode(
-            &mut self,
-            src: &mut asynchronous_codec::BytesMut,
-        ) -> Result<Option<Self::Item>, Self::Error> {
+        fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
             self.decode_helper(src)
         }
     }
