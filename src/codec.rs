@@ -1,4 +1,4 @@
-use crate::{Result as CCSDSResult, SpacePacket, SpacePacketError};
+use crate::SpacePacket;
 use bytes::{Buf, BytesMut};
 
 #[cfg(feature = "crc")]
@@ -57,7 +57,7 @@ impl SpacePacketCodec {
             .position(|window| window == &*self.sync_marker)
     }
 
-    fn decode_helper(&mut self, buffer: &mut BytesMut) -> CCSDSResult<Option<PacketReturn>> {
+    fn decode_helper(&mut self, buffer: &mut BytesMut) -> std::io::Result<Option<PacketReturn>> {
         if self.state == CodecState::Sync {
             if let Some(index) = self.find_sync(buffer) {
                 buffer.advance(index + self.sync_marker.len());
@@ -128,7 +128,7 @@ mod non_tokio {
         #[cfg(not(feature = "crc"))]
         type Item = SpacePacket;
 
-        type Error = SpacePacketError;
+        type Error = std::io::Error;
 
         fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
             self.decode_helper(src)
@@ -138,7 +138,7 @@ mod non_tokio {
     impl Encoder for SpacePacketCodec {
         type Item = SpacePacket;
 
-        type Error = SpacePacketError;
+        type Error = std::io::Error;
 
         fn encode(
             &mut self,
@@ -175,7 +175,7 @@ mod tokio_codec {
         #[cfg(not(feature = "crc"))]
         type Item = SpacePacket;
 
-        type Error = SpacePacketError;
+        type Error = std::io::Error;
 
         fn decode(&mut self, src: &mut bytes::BytesMut) -> Result<Option<Self::Item>, Self::Error> {
             self.decode_helper(src)
@@ -183,7 +183,7 @@ mod tokio_codec {
     }
 
     impl Encoder<SpacePacket> for SpacePacketCodec {
-        type Error = SpacePacketError;
+        type Error = std::io::Error;
 
         fn encode(
             &mut self,

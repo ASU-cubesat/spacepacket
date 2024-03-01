@@ -30,9 +30,6 @@ pub mod codec;
 /// A re-export of the [crc] crate.
 pub use crc;
 
-mod error;
-pub use error::{Result, SpacePacketError};
-
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// CCSDS grouping flag to determine packet location in a stream.
@@ -118,7 +115,7 @@ impl PrimaryHeader {
     }
     /// Decode from a byte stream for network communication.
     /// This decoding assumes BigEndian-ness
-    pub fn decode<R: Read>(buffer: &mut R) -> Result<Self> {
+    pub fn decode<R: Read>(buffer: &mut R) -> std::io::Result<Self> {
         let header0 = buffer.read_u16::<BigEndian>()?;
 
         let (version, packet_type, secondary_header, apid) = (
@@ -215,7 +212,7 @@ impl SpacePacket {
     }
     /// Decode the header and retrieve the payload
     /// This decoding assumed BigEndian-ness
-    pub fn decode<R: Read>(buffer: &mut R) -> Result<Self> {
+    pub fn decode<R: Read>(buffer: &mut R) -> std::io::Result<Self> {
         let primary_header = PrimaryHeader::decode(buffer)?;
         // add one to acount for CCSDS standard subtracting 1
         let message_len = buffer.read_u16::<BigEndian>()? + 1;
@@ -255,7 +252,7 @@ impl SpacePacket {
     /// This method assumes the length of the CRC should be **included** in the payload length of the CCSDS Packet.
     /// The crc is stripped from the byte stream and not included in the returned packet.
     /// Error if the packet's CRC is not valid.
-    pub fn decode_crc<R: Read>(buffer: &mut R, crc: &Crc<u16>) -> Result<CompletePacket> {
+    pub fn decode_crc<R: Read>(buffer: &mut R, crc: &Crc<u16>) -> std::io::Result<CompletePacket> {
         let full_message = {
             // read the ccsds header
             let header_buffer = {
