@@ -6,6 +6,9 @@ use byteorder::{BigEndian, ReadBytesExt};
 #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
 use crc::Crc;
 
+#[cfg(feature = "crc")]
+use std::fmt::Display;
+
 use std::io::Read;
 
 #[cfg(any(feature = "async-codec", feature = "tokio-codec"))]
@@ -142,6 +145,28 @@ impl PrimaryHeader {
     }
 }
 
+/// A thin wrapper for CRC enable SpacePackets
+/// This is used to distinguish between a packet with an invalid CRC but valid form
+/// And and unrecoverable decoding error.
+#[cfg(feature = "crc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CompletePacket {
+    /// The CRC validated packet
+    Valid(SpacePacket),
+    /// The expected and computed CRC values associated with this packet.
+    /// The packet was deemed invalid and discarded but is a recoverable error.
+    InvalidCRC(u16, u16),
+}
+#[cfg(feature = "crc")]
+impl Display for CompletePacket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self{
+            CompletePacket::Valid(packet) => write!(f, "{:?}", packet),
+            CompletePacket::InvalidCRC(expected, computed) => write!(f, "Invalid CRC encountered in packet decoding. Expected {expected:>#06X} Received {computed:>#06X}"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// CCSCS Space Packet defined in 133.0-B-2 June 2020
 /// Primary header generated automatically when initializing this structue.
@@ -230,7 +255,7 @@ impl SpacePacket {
     /// This method assumes the length of the CRC should be **included** in the payload length of the CCSDS Packet.
     /// The crc is stripped from the byte stream and not included in the returned packet.
     /// Error if the packet's CRC is not valid.
-    pub fn decode_crc<R: Read>(buffer: &mut R, crc: &Crc<u16>) -> Result<Self> {
+    pub fn decode_crc<R: Read>(buffer: &mut R, crc: &Crc<u16>) -> Result<CompletePacket> {
         let full_message = {
             // read the ccsds header
             let header_buffer = {
@@ -250,15 +275,15 @@ impl SpacePacket {
         let computed_crc = crc.checksum(&full_message[0..full_message.len() - 2]);
         match crc_sent == computed_crc {
             true => {}
-            false => return Err(SpacePacketError::InvalidCRC(crc_sent, computed_crc)),
+            false => return Ok(CompletePacket::InvalidCRC(crc_sent, computed_crc)),
         };
 
         let primary_header = PrimaryHeader::decode(&mut full_message.as_slice())?;
 
-        Ok(Self {
+        Ok(CompletePacket::Valid(Self {
             primary_header,
             payload: full_message[6..full_message.len() - 2].to_vec(),
-        })
+        }))
     }
 }
 
@@ -358,6 +383,48 @@ mod test {
         let recovered = SpacePacket::decode_crc(&mut buffer.as_slice(), &crc)
             .expect("Unable to parse SpacePacket.");
 
-        assert_eq!(expected, recovered)
+        assert_eq!(CompletePacket::Valid(expected), recovered)
+    }
+
+    #[rstest]
+    #[cfg(feature = "crc")]
+    fn spacepacket_roundtrip_invalid_crc(
+        #[values(
+            GroupingFlag::Interm,
+            GroupingFlag::First,
+            GroupingFlag::Last,
+            GroupingFlag::Unsegm
+        )]
+        grouping: GroupingFlag,
+        #[values(true, false)] secondary_header: bool,
+        #[values(PacketType::Command, PacketType::Telemetry)] packet_type: PacketType,
+    ) {
+        let crc = Crc::<u16>::new(&CRC_16_IBM_3740);
+        let expected = SpacePacket::new(
+            0,
+            packet_type,
+            1555_u16,
+            grouping,
+            1423_u16,
+            secondary_header,
+            "a test input".as_bytes().to_vec(),
+        );
+
+        let (buffer, expected_crc) = {
+            let mut tmp = expected.encode_crc(&crc);
+            let n_bytes = tmp.len();
+            let crc = u16::from_be_bytes([tmp[n_bytes - 2], tmp[n_bytes - 1]]);
+            tmp[n_bytes - 2..].copy_from_slice(&(crc + 1).to_be_bytes());
+            (tmp, crc)
+        };
+
+        let recovered = SpacePacket::decode_crc(&mut buffer.as_slice(), &crc)
+            .expect("Unable to parse SpacePacket.");
+
+        // expected and recovered actually switch here because we alter the CRC on the original message
+        assert_eq!(
+            CompletePacket::InvalidCRC(expected_crc + 1, expected_crc),
+            recovered
+        )
     }
 }

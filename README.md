@@ -33,4 +33,8 @@ let packet = SpacePacket::new(
     true,
     payload,
 );
+
+let bytestream = packet.encode();
+let recovered_packet = SpacePacket::decode(&mut bytestream.as_slice()).unwrap();
+assert_eq!(packet, recovered_packet)
 ```

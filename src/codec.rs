@@ -2,7 +2,7 @@ use crate::{Result as CCSDSResult, SpacePacket, SpacePacketError};
 use bytes::{Buf, BytesMut};
 
 #[cfg(feature = "crc")]
-use crc::Crc;
+use {crate::CompletePacket, crc::Crc};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum CodecState {
@@ -14,6 +14,11 @@ enum CodecState {
     docsrs,
     doc(cfg(any(feature = "async-codec", feature = "tokio-codec")))
 )]
+#[cfg(feature = "crc")]
+type PacketReturn = CompletePacket;
+#[cfg(not(feature = "crc"))]
+type PacketReturn = SpacePacket;
+
 /// A Codec used to Encode/Decode [SpacePacket]s from Streams and Sinks.
 /// This Codec can be useful when designing programs that must listen for
 /// a packet on an I/O device.
@@ -52,7 +57,7 @@ impl SpacePacketCodec {
             .position(|window| window == &*self.sync_marker)
     }
 
-    fn decode_helper(&mut self, buffer: &mut BytesMut) -> CCSDSResult<Option<SpacePacket>> {
+    fn decode_helper(&mut self, buffer: &mut BytesMut) -> CCSDSResult<Option<PacketReturn>> {
         if self.state == CodecState::Sync {
             if let Some(index) = self.find_sync(buffer) {
                 buffer.advance(index + self.sync_marker.len());
@@ -102,7 +107,8 @@ impl SpacePacketCodec {
         #[cfg(feature = "crc")]
         match &self.crc {
             Some(crc) => SpacePacket::decode_crc(&mut data.as_slice(), crc).map(Some),
-            None => SpacePacket::decode(&mut data.as_slice()).map(Some),
+            None => SpacePacket::decode(&mut data.as_slice())
+                .map(|packet| Some(CompletePacket::Valid(packet))),
         }
 
         #[cfg(not(feature = "crc"))]
@@ -117,6 +123,9 @@ mod non_tokio {
     use asynchronous_codec::{Decoder, Encoder};
 
     impl Decoder for SpacePacketCodec {
+        #[cfg(feature = "crc")]
+        type Item = CompletePacket;
+        #[cfg(not(feature = "crc"))]
         type Item = SpacePacket;
 
         type Error = SpacePacketError;
@@ -161,6 +170,9 @@ mod tokio_codec {
     use super::*;
 
     impl Decoder for SpacePacketCodec {
+        #[cfg(feature = "crc")]
+        type Item = CompletePacket;
+        #[cfg(not(feature = "crc"))]
         type Item = SpacePacket;
 
         type Error = SpacePacketError;
@@ -341,7 +353,7 @@ mod test {
 
         let recovered = executor::block_on(framed.try_next()).unwrap().unwrap();
 
-        assert_eq!(expected, recovered)
+        assert_eq!(CompletePacket::Valid(expected), recovered)
     }
 
     #[rstest]
@@ -378,7 +390,7 @@ mod test {
 
         let recovered = executor::block_on(framed.try_next()).unwrap().unwrap();
 
-        assert_eq!(expected, recovered)
+        assert_eq!(CompletePacket::Valid(expected), recovered)
     }
 
     #[rstest]
@@ -419,6 +431,6 @@ mod test {
 
         let recovered = executor::block_on(framed.try_next()).unwrap().unwrap();
 
-        assert_eq!(expected, recovered)
+        assert_eq!(CompletePacket::Valid(expected), recovered)
     }
 }
