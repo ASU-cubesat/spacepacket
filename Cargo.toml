@@ -1,30 +1,36 @@
 [package]
  name         = "spacepacket"
+ description  = "A CCSDS compliant spacepacket en/de-coder with CRC and Sink/Stream support."
+ homepage     = "https://github.com/ASU-cubesat/spacepacket"
+ repository   = "https://github.com/ASU-cubesat/spacepacket"
+ readme       = "README.md"
  version      = "0.1.0"
  edition      = "2021"
  rust-version = "1.63"
+ license-file = "LICENSE"
+ categories   = [ "aerospace::space-protocols" ]
+ keywords     = [ "ccsds", "bytes", "parser", "packets" ]
 
  # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
- async-codec = ["asynchronous-codec", "bytes"]
- tokio-codec = ["bytes", "tokio-util/codec"]
- crc         = ["dep:crc"]
+ async-codec = [ "asynchronous-codec", "bytes" ]
+ tokio-codec = [ "bytes", "tokio-util/codec" ]
+ crc         = [ "dep:crc" ]
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
  # document all features
  all-features = true
  # defines the configuration attribute `docsrs`
- rustdoc-args = ["--cfg", "docsrs"]
+ rustdoc-args = [ "--cfg", "docsrs" ]
 
 [dependencies]
  asynchronous-codec = { version = "~0.6", optional = true }
  byteorder          = "~1.4"
  bytes              = { version = "~1.4", optional = true }
  crc                = { version = "3.0", optional = true }
- thiserror          = "~1.0"
- tokio-util         = { version = "~0.7", optional = true, features = ["codec"] }
+ tokio-util         = { version = "~0.7", optional = true, features = [ "codec" ] }
 
 
 [dev-dependencies]
