@@ -7,15 +7,14 @@ const TAIL_SEQUENCE: &[u8] = &[0xC5, 0xC5, 0xC5, 0xC5, 0xC5, 0xC5, 0xC5, 0x79];
 
 lazy_static! {
     static ref LOOKUP_TALBE: [u8; 256] = (0_u8..=255)
-        .map(|mut val| {
-            (0..8_u8).for_each(|_| {
-                val = if val & 0x80 == 0 {
+        .map(|val| {
+            (0..8_u8).fold(val, |val, _| {
+                if val & 0x80 == 0 {
                     val << 1
                 } else {
                     (val << 1) ^ CCSDS_POLYNOMIAL
-                };
-            });
-            val
+                }
+            })
         })
         .collect::<Vec<_>>()
         .try_into()
