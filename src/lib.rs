@@ -6,6 +6,8 @@ use byteorder::{BigEndian, ReadBytesExt};
 #[cfg_attr(docsrs, doc(cfg(feature = "crc")))]
 use crc::Crc;
 
+pub mod tc;
+
 #[cfg(feature = "crc")]
 use std::fmt::Display;
 
