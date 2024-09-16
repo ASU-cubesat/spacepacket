@@ -50,7 +50,7 @@ pub(crate) fn encode_bch_ctlu(bytes: &[u8]) -> Vec<u8> {
     // handle any remainder by resizing to 7-bytes chunk
     if !iter.remainder().is_empty() {
         let mut remainder = iter.remainder().to_vec();
-        // padd with bits of alternating 0 and 1s starting with 0
+        // pad with bits of alternating 0 and 1s starting with 0
         remainder.resize(7, 0x55_u8);
         output.extend_from_slice(&remainder);
         // unwraping is safe here because we have forced a  length of 7

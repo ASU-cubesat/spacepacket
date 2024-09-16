@@ -8,7 +8,7 @@ The full packet is parsed into a SpacePacket struct, all overhead for the payloa
 
 This crate was created after viewing other rust-based CCSDS crates and wanting a more friendly user interface for packet interaction.
 
-Currently this crate assumes Big Endian for all byte streams. Though this may change to be generic over endian in the future.
+Currently this crate assumes Big Endian for all byte streams. Though this may change to be generic over endianness in the future.
 
 
 ## Optional Features
@@ -17,6 +17,12 @@ This crate provides data validation via CRC-16 calculation through the [crc crat
 #### Sink/Stream Support
 Another optional feature this crate provides is support for for sapcepacket I/O via sinks and stream through the async-codec and tokio-codec features.
 This allows users to easily create asynchronous listeners for spacepackets with optional sync markers and CRC support.
+#### TC/TM Support and CLTU Generation
+TeleComamand (TC) and Telemetry (TM) Frames are supported when the `tctm` feature is enabled.
+
+Communications Link Transmission Unit (CLTU) packets can also be constructed
+when this feature is enabled. Currently only BCH and Randomized BCH
+encoding is supported however LDPC encoding is planned as a future enhancement.
 
 
 # Examples

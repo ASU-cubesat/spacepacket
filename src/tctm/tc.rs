@@ -270,14 +270,16 @@ mod test {
         #[values(BypassFlag::TypeA, BypassFlag::TypeB)] bypass_flag: BypassFlag,
         #[values(ControlFlag::TypeD, ControlFlag::TypeD)] control_flag: ControlFlag,
         #[case] payload: Vec<u8>,
+        #[values(0, 33, 1023)] scid: u16,
+        #[values(0, 3, 7)] vcid: u8,
     ) {
         let expected = TCTransferFrame::new(
             TCPrimaryHeader {
                 tfvn: 0,
                 bypass_flag,
                 control_flag,
-                scid: 33,
-                vcid: 1,
+                scid,
+                vcid,
                 sequence_number: 23,
             },
             payload,
