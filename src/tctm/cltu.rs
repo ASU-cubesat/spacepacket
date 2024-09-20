@@ -1,36 +1,9 @@
 //! Generate Communications Link Transmission Unit (CLTU) packets
 //! as defined in CCSDS 231.0-B-4
 
-use lazy_static::lazy_static;
+use crate::tctm::randomizer::{apply_randomization, Randomization};
 
 mod bch;
-
-lazy_static! {
-    static ref TC_RANDOMIZER: [u8; 255] = {
-        let mut lfsr = 0xFF_u8;
-        let mut extra_bit = 0_u8;
-
-        [0_u8; 255]
-            .into_iter()
-            .map(|mut val| {
-                (0..8).for_each(|_| {
-                    val = (val << 1) | (lfsr & 1);
-                    extra_bit = (lfsr
-                        ^ (lfsr >> 1)
-                        ^ (lfsr >> 2)
-                        ^ (lfsr >> 3)
-                        ^ (lfsr >> 4)
-                        ^ (lfsr >> 6))
-                        & 1;
-                    lfsr = (lfsr >> 1) | (extra_bit << 7);
-                });
-                val
-            })
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap()
-    };
-}
 
 #[derive(Debug, Clone, Copy)]
 /// Possible  CCSDS 231.0-B-4  CLTU encoding types
@@ -49,14 +22,9 @@ pub fn generate_ctlu<P: AsRef<[u8]>>(bytes: P, encoding: EncodingScheme) -> Vec<
     let bytes = bytes.as_ref();
     match encoding {
         EncodingScheme::BCH => bch::encode_bch_ctlu(bytes),
-        EncodingScheme::BCHRandomized => bch::encode_bch_ctlu(
-            bytes
-                .iter()
-                .zip(TC_RANDOMIZER.iter().cycle())
-                .map(|(val, rand)| val ^ rand)
-                .collect::<Vec<u8>>()
-                .as_slice(),
-        ),
+        EncodingScheme::BCHRandomized => {
+            bch::encode_bch_ctlu(apply_randomization(bytes, Randomization::TC).as_slice())
+        }
     }
 }
 
@@ -132,20 +100,5 @@ mod test {
     #[case(TC_FRAME_02, CLTU_02)]
     fn cltu_gen(#[case] tc_frame: &[u8], #[case] cltu: &[u8]) {
         assert_eq!(cltu, generate_ctlu(tc_frame, EncodingScheme::BCH))
-    }
-
-    #[test]
-    fn tc_randomizer() {
-        let expected_seq = [
-            0b1111_1111_u8,
-            0b0011_1001,
-            0b1001_1110,
-            0b0101_1010,
-            0b0110_1000,
-        ];
-
-        let seq: [u8; 5] = TC_RANDOMIZER[..5].try_into().unwrap();
-
-        assert_eq!(expected_seq, seq)
     }
 }

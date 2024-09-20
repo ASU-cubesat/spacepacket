@@ -193,7 +193,8 @@ impl TCTransferFrame {
             | (scid & 0x3ff_u16)
         };
 
-        let encoded_len = (self.payload.len() - 1) as u16;
+        // Add 5 to account for the header length as well
+        let encoded_len = (self.payload.len() - 1 + 5) as u16;
         let second_word = { ((vcid as u16 & 0x3f_u16) << 10) | (encoded_len & 0x3ff_u16) };
 
         let mut message = first_word.to_be_bytes().to_vec();
@@ -212,7 +213,8 @@ impl TCTransferFrame {
         let first_word = buffer.read_u16::<BigEndian>()?;
         let second_word = buffer.read_u16::<BigEndian>()?;
 
-        let payload_len = (second_word & 0x3ff_u16) + 1;
+        // subtract 5 to accound for the length of the Primary Header
+        let payload_len = (second_word & 0x3ff_u16) + 1 - 5;
 
         let header = TCPrimaryHeader {
             tfvn: ((first_word >> 14) & 0x3_u16) as u8,
@@ -292,5 +294,38 @@ mod test {
             .expect("Should be able to roundtrip TCTransferFrame");
 
         assert_eq!(expected, recovered)
+    }
+
+    #[test]
+    fn tc_compare_spacepy() {
+        // test data from https://github.com/Stefan-Korner/SpacePyLibrary/blob/master/UnitTest/testData.py
+        // TC_FRAME_02
+        let mut input_bytes: &[u8] = &[
+            0x22, 0xF6, 0x00, 0x23, 0x00, 0x82, 0x00, 0x0F, 0x00, 0x1D, 0xFF, 0x00, 0x00, 0x00,
+            0x00, 0x0F, 0x00, 0x1E, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x1F, 0xFF, 0x00,
+            0x00, 0x00, 0x00, 0x0F, 0xAC, 0x8F, 0x00, 0x68,
+        ];
+
+        let expected = TCTransferFrame::new(
+            TCPrimaryHeader {
+                tfvn: 0,
+                bypass_flag: BypassFlag::TypeB,
+                control_flag: ControlFlag::TypeD,
+                scid: 758,
+                vcid: 0,
+                sequence_number: 0,
+            },
+            vec![
+                0x82, 0x00, 0x0F, 0x00, 0x1D, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x1E, 0xFF,
+                0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x1F, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x0F, 0xAC,
+                0x8F, 0x00, 0x68,
+            ],
+        )
+        .expect("Unable to make test transfer frame.");
+
+        let parsed_tc =
+            TCTransferFrame::decode(&mut input_bytes).expect("unable to parse input bytes.");
+
+        assert_eq!(expected, parsed_tc)
     }
 }
