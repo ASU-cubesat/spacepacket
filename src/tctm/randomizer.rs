@@ -74,6 +74,7 @@ lazy_static! {
     };
 }
 
+#[cfg_attr(test, derive(Clone, Copy))]
 pub(crate) enum Randomization {
     TC,
     Tm255,
@@ -97,6 +98,8 @@ pub(crate) fn apply_randomization<P: AsRef<[u8]>>(bytes: P, randomizer: Randomiz
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use rstest::rstest;
 
     #[test]
     fn tc_randomizer() {
@@ -141,5 +144,21 @@ mod test {
         let seq: [u8; 5] = TM_RANDOMIZER_131071[..5].try_into().unwrap();
 
         assert_eq!(expected_eq, seq)
+    }
+
+    #[rstest]
+    fn apply_randomness(
+        #[values(Randomization::TC, Randomization::Tm255, Randomization::Tm131071)]
+        randomization: Randomization,
+    ) {
+        let input_bytes: Vec<u8> = (0..131_071_u32).map(|val| (val % 256) as u8).collect();
+
+        let random_bytes = apply_randomization(&input_bytes, randomization);
+
+        assert_ne!(input_bytes, random_bytes);
+
+        let recovered_bytes = apply_randomization(random_bytes, randomization);
+
+        assert_eq!(input_bytes, recovered_bytes)
     }
 }
