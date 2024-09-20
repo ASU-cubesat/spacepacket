@@ -101,15 +101,18 @@ impl SegmentLength {
 pub enum FirstHeaderPointer {
     /// Index of  the first header must be less than 2046
     ByteIndex(u16),
+    /// This packet contains only IDLE data
     OnlyIdleData = 0b111_1111_1110,
-    NoPacket = 0b111_1111_1111,
+    /// This frame is entirely a continuation of a previous packet
+    /// No new packet header starts inside of this frame.
+    NoPacketStart = 0b111_1111_1111,
 }
 impl FirstHeaderPointer {
     pub fn into_u16(self) -> u16 {
         match self {
             FirstHeaderPointer::ByteIndex(value) => value & 0x7ff,
             FirstHeaderPointer::OnlyIdleData => 0b111_1111_1110,
-            FirstHeaderPointer::NoPacket => 0b111_1111_1111,
+            FirstHeaderPointer::NoPacketStart => 0b111_1111_1111,
         }
     }
 
@@ -117,7 +120,7 @@ impl FirstHeaderPointer {
         match value {
             val if val < 2046 => Ok(Self::ByteIndex(val)),
             0b111_1111_1110 => Ok(Self::OnlyIdleData),
-            0b111_1111_1111 => Ok(Self::NoPacket),
+            0b111_1111_1111 => Ok(Self::NoPacketStart),
             val => Err(Error::new(
                 ErrorKind::InvalidData,
                 format!(
@@ -141,7 +144,7 @@ impl FirstHeaderPointer {
                 }
             }
             Self::OnlyIdleData => Ok(()),
-            Self::NoPacket => Ok(()),
+            Self::NoPacketStart => Ok(()),
         }
     }
 }
