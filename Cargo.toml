@@ -8,6 +8,7 @@
  edition      = "2021"
  rust-version = "1.63"
  license-file = "LICENSE"
+ license      = "MIT"
  categories   = [ "aerospace::space-protocols" ]
  keywords     = [ "ccsds", "bytes", "parser", "packets" ]
  exclude      = [ ".github" ]
