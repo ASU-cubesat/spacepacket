@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-### v0.1.1
+## v0.1.1
 - TC Frame support (CCSDS 232.0-B-4)
 - CLTU Generation only with BCH encoding (CCSDS 231.0-B-4)
 - TM Frame support (CCSDS 132.0-B-3)
