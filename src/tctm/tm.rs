@@ -99,7 +99,7 @@ impl SegmentLength {
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FirstHeaderPointer {
-    /// Index of  the first header must be less than 2046
+    /// Index of  the first header must be less than 2048
     ByteIndex(u16),
     /// This packet contains only IDLE data
     OnlyIdleData = 0b111_1111_1110,
@@ -118,7 +118,7 @@ impl FirstHeaderPointer {
 
     pub fn from_u16(value: u16) -> Result<Self, Error> {
         match value {
-            val if val < 2046 => Ok(Self::ByteIndex(val)),
+            val if val < 2048 => Ok(Self::ByteIndex(val)),
             0b111_1111_1110 => Ok(Self::OnlyIdleData),
             0b111_1111_1111 => Ok(Self::NoPacketStart),
             val => Err(Error::new(
@@ -134,7 +134,7 @@ impl FirstHeaderPointer {
     pub fn validate(&self) -> Result<(), Error> {
         match self {
             Self::ByteIndex(index) => {
-                if index < &2046_u16 {
+                if index < &2048_u16 {
                     Ok(())
                 } else {
                     Err(Error::new(
