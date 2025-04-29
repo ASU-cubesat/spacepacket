@@ -36,7 +36,7 @@ pub fn compute_bch_parity(bytes: &[u8; 7]) -> u8 {
     remainder
 }
 
-pub(crate) fn encode_bch_ctlu(bytes: &[u8]) -> Vec<u8> {
+pub(crate) fn encode_bch_cltu(bytes: &[u8]) -> Vec<u8> {
     let mut output = START_SEQUNCE.to_vec();
 
     let mut iter = bytes.chunks_exact(7);

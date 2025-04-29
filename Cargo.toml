@@ -21,12 +21,12 @@
  crc         = [ "dep:crc" ]
  tctm        = [ "dep:lazy_static" ]
 
-# docs.rs-specific configuration
-[package.metadata.docs.rs]
- # document all features
- all-features = true
- # defines the configuration attribute `docsrs`
- rustdoc-args = [ "--cfg", "docsrs" ]
+ # docs.rs-specific configuration
+ [package.metadata.docs.rs]
+  # document all features
+  all-features = true
+  # defines the configuration attribute `docsrs`
+  rustdoc-args = [ "--cfg", "docsrs" ]
 
 [dependencies]
  asynchronous-codec = { version = "~0.6", optional = true }

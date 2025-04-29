@@ -198,10 +198,10 @@ impl TMDataFieldStatus {
             first_header_pointer,
         } = self;
 
-        let word = (secondary_header_flag as u16) << 15
-            | (synchronization_flag as u16) << 14
-            | (packet_order as u16) << 13
-            | (segment_length as u16) << 11
+        let word = ((secondary_header_flag as u16) << 15)
+            | ((synchronization_flag as u16) << 14)
+            | ((packet_order as u16) << 13)
+            | ((segment_length as u16) << 11)
             | first_header_pointer.into_u16();
 
         word.to_be_bytes().to_vec()
@@ -303,9 +303,9 @@ impl TMPrimaryHeader {
         } = self;
 
         let first_word = {
-            (tfvn as u16 & 0x3_u16) << 14
-                | (scid & 0x3ff_u16) << 4
-                | (vcid as u16 & 0x7_u16) << 1
+            ((tfvn as u16 & 0x3_u16) << 14)
+                | ((scid & 0x3ff_u16) << 4)
+                | ((vcid as u16 & 0x7_u16) << 1)
                 | ocf_flag as u16
         };
 
@@ -391,7 +391,7 @@ impl TMSecondaryHeader {
         // and the encoded length is total length -1
         // so we need to take len() +1 -1 or just len
         let packet_len = (data_field.len()) as u8;
-        let mut message = vec![{ (tfvn & 0x3_u8) << 6 | packet_len }];
+        let mut message = vec![{ ((tfvn & 0x3_u8) << 6) | packet_len }];
         message.append(&mut data_field);
         message
     }

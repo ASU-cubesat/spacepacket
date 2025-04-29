@@ -186,9 +186,9 @@ impl TCTransferFrame {
         } = self.header;
 
         let first_word = {
-            (tfvn as u16 & 0x3_u16) << 14
-            | (bypass_flag as u16 & 0x1_u16) << 13
-            | (control_flag as u16 & 0x1_u16) << 12
+            ( (tfvn as u16 & 0x3_u16) << 14)
+            | ((bypass_flag as u16 & 0x1_u16) << 13)
+            | ((control_flag as u16 & 0x1_u16) << 12)
             // two spare bits here reserved
             | (scid & 0x3ff_u16)
         };

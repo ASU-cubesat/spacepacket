@@ -105,12 +105,12 @@ impl PrimaryHeader {
     /// This encoding assumed BigEndian-ness
     pub fn encode(&self) -> Vec<u8> {
         let mut message = vec![];
-        let header_0 = u16::from(self.version & 0x7) << 13
-                    | u16::from(self.packet_type as u8 & 0x1) << 12
+        let header_0 = ( u16::from(self.version & 0x7) << 13)
+                    | (u16::from(self.packet_type as u8 & 0x1) << 12)
                     // Flag for secondary header
-                    | (self.secondary_header as u16) << 11
+                    | ((self.secondary_header as u16) << 11)
                     | (self.apid & 0x7FF);
-        let header_1 = (self.grouping as u16) << 14 | (self.sequence_count & 0x3FFF);
+        let header_1 = ((self.grouping as u16) << 14) | (self.sequence_count & 0x3FFF);
 
         message.extend_from_slice(&header_0.to_be_bytes());
         message.extend_from_slice(&header_1.to_be_bytes());

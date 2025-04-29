@@ -18,12 +18,12 @@ pub enum EncodingScheme {
 
 /// Generates a Communications Link Transmission Unit (CLTU) from an input
 /// byte stream using the chosen encoding scheme.
-pub fn generate_ctlu<P: AsRef<[u8]>>(bytes: P, encoding: EncodingScheme) -> Vec<u8> {
+pub fn generate_cltu<P: AsRef<[u8]>>(bytes: P, encoding: EncodingScheme) -> Vec<u8> {
     let bytes = bytes.as_ref();
     match encoding {
-        EncodingScheme::BCH => bch::encode_bch_ctlu(bytes),
+        EncodingScheme::BCH => bch::encode_bch_cltu(bytes),
         EncodingScheme::BCHRandomized => {
-            bch::encode_bch_ctlu(apply_randomization(bytes, Randomization::TC).as_slice())
+            bch::encode_bch_cltu(apply_randomization(bytes, Randomization::TC).as_slice())
         }
     }
 }
@@ -99,6 +99,6 @@ mod test {
     #[case(TC_FRAME_01, CLTU_01)]
     #[case(TC_FRAME_02, CLTU_02)]
     fn cltu_gen(#[case] tc_frame: &[u8], #[case] cltu: &[u8]) {
-        assert_eq!(cltu, generate_ctlu(tc_frame, EncodingScheme::BCH))
+        assert_eq!(cltu, generate_cltu(tc_frame, EncodingScheme::BCH))
     }
 }
