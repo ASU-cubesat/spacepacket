@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## v0.1.2
+- Fixed typo in CLTU related function names.
+
 ## v0.1.1
 - TC Frame support (CCSDS 232.0-B-4)
 - CLTU Generation only with BCH encoding (CCSDS 231.0-B-4)
