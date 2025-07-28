@@ -38,6 +38,6 @@
 
 
 [dev-dependencies]
- rstest      = "~0.25"
+ rstest      = "~0.26"
  futures     = "~0.3"
  spacepacket = { path = ".", features = [ "async-codec", "crc", "tctm" ] }
